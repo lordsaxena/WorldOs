@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WORLDOS</title>
+<style>
+:root{--bg:#0b0e14;--s1:#111826;--s2:#16203a;--ln:#243049;--tx:#d8e2f2;--mu:#8393ad;--cy:#27d3ee;--vi:#9b7bff;--gr:#3ddc97;--am:#f5b73d;--rd:#ff5c6c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 "IBM Plex Sans",system-ui,sans-serif}
+body{display:flex;min-height:100vh}
+nav{width:190px;background:var(--s1);border-right:1px solid var(--ln);padding:14px 10px;flex:none}
+nav h1{font-size:17px;margin:0 6px 2px;letter-spacing:.14em}nav small{display:block;margin:0 6px 14px;color:var(--mu);font-size:11px}
+nav button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--mu);padding:8px 10px;border-radius:4px;cursor:pointer;font:inherit}
+nav button.on{background:var(--s2);color:var(--cy);box-shadow:inset 2px 0 var(--cy)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--cy);outline-offset:1px}
+main{flex:1;min-width:0;display:flex;flex-direction:column}
+header{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:8px 18px;border-bottom:1px solid var(--ln);background:var(--s1);font-size:12px}
+.sim{color:var(--am);border:1px solid var(--am);padding:1px 7px;border-radius:3px;font-size:11px}
+.pend{color:var(--am)}.ok{color:var(--gr)}
+section{padding:16px 18px;max-width:1200px;width:100%}
+h2{font-size:16px;margin:0 0 10px}h3{font-size:13px;margin:0 0 8px;color:var(--mu);font-weight:600}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.card{background:var(--s1);border:1px solid var(--ln);border-radius:4px;padding:10px 12px}
+.k b{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}.k span{color:var(--mu);font-size:11px}
+.up{color:var(--gr)}.dn{color:var(--rd)}.nt{color:var(--mu)}
+.two{display:grid;gap:12px;grid-template-columns:minmax(0,2fr) minmax(240px,1fr)}
+@media(max-width:800px){nav{width:100%;display:flex;flex-wrap:wrap;gap:2px;border-right:0;border-bottom:1px solid var(--ln)}nav h1,nav small{display:none}nav button{width:auto}body{flex-direction:column}.two{grid-template-columns:1fr}}
+button.b,select,input[type=text],textarea{background:var(--s2);color:var(--tx);border:1px solid var(--ln);border-radius:4px;padding:6px 10px;font:inherit}
+button.b{cursor:pointer}button.p{background:var(--cy);color:#04141a;border-color:var(--cy);font-weight:600}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.sl{display:grid;grid-template-columns:150px 1fr 44px;gap:8px;align-items:center;margin:5px 0}.sl input{width:100%;accent-color:var(--cy)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}td,th{border-bottom:1px solid var(--ln);padding:5px 8px;text-align:right}td:first-child,th:first-child{text-align:left}
+.wrap{overflow-x:auto}.best{background:#123a2c}
+svg text{fill:var(--tx);font-size:11px}.dist{cursor:pointer;stroke:var(--ln);stroke-width:1.5}.dist.sel{stroke:var(--cy);stroke-width:3}
+.chat{max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:6px}.u{align-self:flex-end;background:var(--s2);padding:6px 10px;border-radius:4px}.a{border-left:2px solid var(--vi);padding:4px 10px;white-space:pre-wrap}
+.bar{height:6px;background:var(--s2);border-radius:3px}.bar i{display:block;height:100%;background:var(--cy);border-radius:3px}
+</style></head><body>
+<nav id="nav"><h1>WORLDOS</h1><small>Understand the city. Simulate its future.</small></nav>
+<main><header id="hd"></header><section id="v"></section></main>
+<script>
+const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v)),r1=v=>Math.round(v*10)/10;
+const PD=[['transit','Public transit investment',30],['road','Road capacity',40],['pricing','Congestion pricing',0],['cycling','Cycling infrastructure',20],['renew','Renewable investment',25],['eff','Energy efficiency',30],['industry','Industrial activity',50],['housing','Housing construction',40],['afford','Affordable housing share',20],['green','Green coverage',25],['water','Water investment',30],['cons','Water conservation',30],['carbon','Carbon policy',20],['growth','Population growth (%/yr)',1.5]];
+const BASE=Object.fromEntries(PD.map(d=>[d[0],d[2]]));
+const MODEL='0.1.0';let BR=0;
+function sim(p,y){const t=y-2026,pf=Math.pow(1+p.growth/100,t);
+const ts=clamp(8+.3*p.transit+.1*p.cycling+.15*p.pricing-.05*p.road,5,60);
+const dem=pf*(1-ts/100)*(1+.3*p.road/100)*(1-.3*p.pricing/100),cap=.9+.8*Math.sqrt(p.road/100);
+const cong=clamp(90*dem/cap),en=100*pf*(.7+.5*p.industry/100)*(1-.4*p.eff/100);
+const rs=clamp(100*.9*p.renew/en,0,95),raw=en*(1-rs/100)*(1-.3*p.carbon/100)+40*dem;BR=BR||raw;
+const wd=100*pf*(1-.35*p.cons/100)*(.9+.2*p.industry/100),ws=80*(1+.8*p.water/100)*(1-(30-.2*p.water)/100);
+const water=clamp(100*ws/wd),afford=clamp(100*(45+.9*p.housing)/(100*pf)*(.75+.5*p.afford/100));
+const green=clamp(p.green-.15*(p.housing-40)),econ=60*Math.pow(pf,.6)+.3*p.industry+.1*p.transit-.15*cong+.1*p.housing-.1*p.pricing;
+const stress=clamp(.4*cong+.3*(100-water)+.3*clamp(en-20)),resil=clamp(.25*(100-stress)+.2*water+.15*afford+.2*green+.2*rs);
+const cost=.8*p.transit+.6*p.road+.5*p.cycling+p.renew+.4*p.eff+.7*p.housing+.3*p.afford+.4*p.green+.5*p.water+.2*p.carbon+.3*p.cons-.3*p.pricing;
+const o={pop:2.4*pf,cong,transit:ts,energy:en,renew:rs,emis:100*raw/BR,water,afford,green,econ,stress,resil,cost};
+for(const k in o)o[k]=r1(o[k]);return o}
+sim(BASE,2026);
+const M=[['cong','Congestion index','idx','lo'],['transit','Transit mode share','%','hi'],['energy','Electricity demand','idx','n'],['renew','Renewable share','%','hi'],['emis','Emissions index','idx','lo'],['water','Water security','idx','hi'],['afford','Housing affordability','idx','hi'],['green','Effective green coverage','idx','hi'],['econ','Economic activity','idx','hi'],['stress','Infrastructure stress','idx','lo'],['resil','Urban resilience','idx','hi'],['cost','Policy cost','units/yr','lo'],['pop','Population','M','n']];
+const PRE=[['Business as Usual',{}],['Green Mobility Transition',{transit:75,cycling:60,pricing:40,road:35,renew:45}],['High-Growth Expansion',{growth:3,housing:70,industry:75,road:60}],['Climate Resilience Strategy',{renew:70,green:55,water:60,cons:60,carbon:50,eff:55}]];
+const DS=[['Central Business District',.22,1.5,.1,.6,1.3],['North Residential Zone',.24,1,.02,1,.8],['Industrial Corridor',.1,.6,1,.3,1],['Riverside District',.15,.9,.1,1.2,.7],['Green Innovation District',.12,.7,.2,1.6,.5],['Transit-Oriented Zone',.17,1.3,.1,.9,.9]];
+const LY={dens:['Population density',(m,d)=>d[2]*55*m.pop/2.4],cong:['Traffic congestion',(m,d)=>m.cong*d[5]],en:['Energy consumption',(m,d)=>m.energy/84*35*(d[2]+d[3]*1.5)],em:['Carbon emissions',(m,d)=>m.emis/100*35*(d[2]+d[3]*1.5)],wat:['Water stress',(m,d)=>(100-m.water)*1.5+20*(d[2]-.8)],grn:['Green coverage',(m,d)=>m.green*d[4]*1.4]};
+const mk=(n,o)=>({id:n+Date.now()+Math.random(),name:n,p:{...BASE,...o},model:MODEL,at:new Date().toISOString()});
+const s={view:'ov',year:2026,layer:'cong',dist:0,p:{...BASE},com:{...BASE},hist:[],feed:['Model ready. Baseline loaded.'],saved:PRE.slice(1).map(a=>mk(a[0],a[1])),chat:[],rec:null,name:'My scenario',w:{econ:3,mob:3,sus:3,aff:3,res:3},exp:''};
+try{const x=JSON.parse(localStorage.getItem('worldos')||'null');if(x&&x.model===MODEL)s.saved=x.saved}catch(e){}
+const persist=()=>{try{localStorage.setItem('worldos',JSON.stringify({model:MODEL,saved:s.saved}))}catch(e){}};
+const V=['ov','sys','lab','cmp','ai','rep'],VN={ov:'City Overview',sys:'Systems',lab:'Simulation Lab',cmp:'Scenario Comparison',ai:'Urban Intelligence',rep:'Reports & Methodology'};
+const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const dl=(v,b,k)=>{const d=r1(v-b);if(!d||k=='n')return'<span class=nt>'+(d?(d>0?'+':'')+d:'—')+'</span>';const good=(k=='hi')==(d>0);return`<span class="${good?'up':'dn'}">${d>0?'+':''}${d}</span>`};
+function ramp(v){return`hsl(${200-clamp(v)*2},65%,${28+clamp(v)*.15}%)`}
+function mapSVG(m){let o='<svg viewBox="0 0 600 350" width="100%" role="img" aria-label="District map"><rect width="600" height="350" fill="#0d1320"/>';
+DS.forEach((d,i)=>{const x=20+(i%3)*190,y=20+Math.floor(i/3)*165,v=clamp(LY[s.layer][1](m,d));
+o+=`<g><rect class="dist ${i==s.dist?'sel':''}" tabindex=0 data-d="${i}" x=${x} y=${y} width=172 height=148 fill="${ramp(v)}"/>`;
+for(let j=0;j<12;j++){const h=8+((i*7+j*13)%5)*7*d[2]/1.2;o+=`<rect x=${x+10+(j%6)*26} y=${y+34+Math.floor(j/6)*50+(40-h)} width=16 height=${h} fill="#ffffff22" pointer-events=none />`}
+o+=`<text x=${x+8} y=${y+16}>${d[0]}</text><text x=${x+8} y=${y+30} fill=#8393ad>${r1(v)}</text></g>`});
+const u=clamp(m.transit*2.2);o+=`<path d="M20 172 H580" stroke="${ramp(u)}" stroke-width="5" stroke-dasharray="14 6" fill="none"/><text x=300 y=167>Transit corridor ${r1(u)}% utilised</text></svg>`;return o}
+function kpis(m,b,list){return'<div class=grid>'+M.filter(x=>list.includes(x[0])).map(x=>`<div class="card k"><span>${x[1]} (${x[2]})</span><b>${m[x[0]]}</b>${dl(m[x[0]],b[x[0]],x[3])} <span>vs baseline</span></div>`).join('')+'</div>'}
+function layerUI(m){const d=DS[s.dist];return`<div class=row><label>Layer <select id=ly>${Object.entries(LY).map(([k,v])=>`<option value=${k} ${k==s.layer?'selected':''}>${v[0]}</option>`).join('')}</select></label><span class=nt>Colour: cool = low, warm = high</span></div><div class=two><div class=card>${mapSVG(m)}</div><div class=card><h3>${d[0]}</h3>${Object.entries(LY).map(([k,v])=>`<div>${v[0]}: <b>${r1(clamp(v[1](m,d)))}</b></div>`).join('')}<div>Population: <b>${r1(m.pop*d[1]*1000)}k</b></div><div>Land use: ${r1(d[3]*100)}% industrial, ${r1(d[4]*20)}% green</div></div></div>`}
+function rv(){const m=sim(s.com,s.year),b=sim(BASE,s.year),pend=!same(s.p,s.com);
+$('hd').innerHTML=`<span class=sim>SIMULATED ENVIRONMENT</span><span>Fictional city: Meridian Basin</span><label>Year <select id=yr>${[2026,2030,2035,2040].map(y=>`<option ${y==s.year?'selected':''}>${y}</option>`).join('')}</select></label><span class="${pend?'pend':'ok'}">${pend?'Pending changes, not run':'Committed model v'+MODEL}</span>`;
+$('nav').querySelectorAll('button').forEach(x=>x.className=x.dataset.v==s.view?'on':'');
+let h='';
+if(s.view=='ov')h=`<h2>City Overview</h2>${kpis(m,b,['pop','econ','cong','transit','renew','emis','water','stress','resil'])}<div style="margin-top:12px">${layerUI(m)}</div><div class=card style="margin-top:12px"><h3>Activity feed</h3>${s.feed.slice(0,6).map(f=>'<div>'+f+'</div>').join('')}</div>`;
+if(s.view=='sys')h=`<h2>System workspaces</h2><p class=nt>All values come from the committed scenario in the Simulation Lab at ${s.year}.</p>`+[['Mobility',['cong','transit']],['Energy & Climate',['energy','renew','emis','green']],['Water & Resources',['water']],['Economy & Housing',['econ','afford','pop']]].map(g=>`<h3>${g[0]}</h3>${kpis(m,b,g[1])}`).join('')+`<h3>Congestion by district</h3>`+DS.map(d=>`<div class=row><span style="width:210px">${d[0]}</span><div class=bar style="flex:1"><i style="width:${clamp(m.cong*d[5])}%"></i></div><b>${r1(m.cong*d[5])}</b></div>`).join('')+`<h3>Water stress by district</h3>`+DS.map(d=>{const v=clamp(LY.wat[1](m,d));return`<div class=row><span style="width:210px">${d[0]}</span><div class=bar style="flex:1"><i style="width:${v}%;background:${v>40?'var(--am)':'var(--gr)'}"></i></div><b>${r1(v)}</b></div>`}).join('');
+if(s.view=='lab'){const rs=sim(s.p,s.year);h=`<h2>Simulation Lab</h2><div class=row><input type=text id=nm value="${s.name}" aria-label="Scenario name"><button class="b p" id=run>Run simulation</button><button class=b id=sv>Save scenario</button><button class=b id=un>Undo</button><button class=b id=rst>Reset to baseline</button></div><div class=two><div class=card>${PD.map(d=>`<div class=sl><label for=p_${d[0]}>${d[1]}</label><input type=range id=p_${d[0]} data-k=${d[0]} min=0 max=${d[0]=='growth'?4:100} step=${d[0]=='growth'?.1:1} value=${s.p[d[0]]}><b>${s.p[d[0]]}</b></div>`).join('')}<p class=nt>Sliders are 0 to 100 effort levels (growth in %/yr). Diminishing returns apply.</p></div><div class=card><h3>${pend?'Preview of pending parameters':'Committed results'} vs baseline</h3>${M.slice(0,12).map(x=>`<div class=row style="justify-content:space-between;margin:3px 0"><span>${x[1]}</span><span><b>${rs[x[0]]}</b> ${dl(rs[x[0]],b[x[0]],x[3])}</span></div>`).join('')}<h3>Warnings</h3>${warn(rs).map(w=>'<div class=dn>'+w+'</div>').join('')||'<div class=ok>No thresholds exceeded.</div>'}</div></div>`}
+if(s.view=='cmp'){const all=[{name:'Baseline',p:BASE},...s.saved],R=all.map(a=>sim(a.p,s.year)),sc=R.map(r=>wscore(r)),bi=sc.indexOf(Math.max(...sc));
+h=`<h2>Scenario Comparison (${s.year})</h2><div class=wrap><table><tr><th>Metric</th>${all.map(a=>'<th>'+a.name+'</th>').join('')}</tr>${M.map(x=>`<tr><td>${x[1]} (${x[2]})</td>${R.map((r,i)=>`<td>${r[x[0]]} ${i?dl(r[x[0]],R[0][x[0]],x[3]):''}</td>`).join('')}</tr>`).join('')}<tr><td>Weighted score</td>${sc.map((v,i)=>`<td class="${i==bi?'best':''}">${r1(v)}</td>`).join('')}</tr></table></div><h3 style="margin-top:12px">Priorities (1 to 5). The score depends on these weights and model assumptions; no scenario is universally best.</h3><div class=row>${[['econ','Economy'],['mob','Mobility'],['sus','Sustainability'],['aff','Affordability'],['res','Resilience']].map(k=>`<label>${k[1]} <input type=range data-w=${k[0]} min=1 max=5 value=${s.w[k[0]]}></label>`).join('')}</div><p>Highest score for these priorities: <b>${all[bi].name}</b>. Lowest emissions: <b>${all[R.map(r=>r.emis).indexOf(Math.min(...R.map(r=>r.emis)))].name}</b>.</p><div class=row><button class=b id=csv>Show CSV</button>${s.saved.map((a,i)=>`<button class=b data-del=${i}>Delete ${a.name}</button><button class=b data-dup=${i}>Duplicate</button><button class=b data-load=${i}>Load in Lab</button>`).join('')}</div>${s.exp?`<textarea readonly rows=8 style="width:100%" id=ex>${s.exp}</textarea>`:''}`}
+if(s.view=='ai')h=`<h2>Urban Intelligence</h2><p class=nt>Local, rule-based analyst. It reads the committed model and saved scenarios; no external data or API is used.</p><div class=row>${['Which scenario has the lowest emissions?','Why is congestion high?','What happens if we double transit investment?','Recommend policy changes','Compare current with Climate Resilience'].map(q=>`<button class=b data-q="${q}">${q}</button>`).join('')}</div><div class="card chat" id=ch>${s.chat.map(c=>`<div class="${c[0]}">${c[1]}</div>`).join('')||'<span class=nt>Ask a question or pick a prompt.</span>'}${s.rec?'<button class="b p" id=ap style="align-self:flex-start">Apply recommendation to Lab</button>':''}</div><div class=row><input type=text id=q style="flex:1" placeholder="Ask about the simulated city" aria-label="Question"><button class=b id=ask>Ask</button></div>`;
+if(s.view=='rep')h=`<h2>Report: ${s.name}</h2><p class=dn>All city data, infrastructure characteristics, policy outcomes, and simulation results in this prototype are synthetic. Outputs are generated by an illustrative deterministic model and must not be interpreted as validated forecasts or operational recommendations.</p><div class=wrap><table><tr><th>Metric</th><th>Committed</th><th>Baseline</th><th>Change</th></tr>${M.map(x=>`<tr><td>${x[1]} (${x[2]})</td><td>${m[x[0]]}</td><td>${b[x[0]]}</td><td>${dl(m[x[0]],b[x[0]],x[3])}</td></tr>`).join('')}</table></div><h3 style="margin-top:12px">Changed parameters</h3><p>${PD.filter(d=>s.com[d[0]]!=BASE[d[0]]).map(d=>d[1]+': '+BASE[d[0]]+' to '+s.com[d[0]]).join('; ')||'None (baseline).'}</p><h3>Methodology and limitations</h3><p>Model v${MODEL}: closed-form, deterministic functions with bounded outputs and diminishing returns. Congestion = 90 x car demand / road capacity (capacity grows with the square root of road effort; road expansion also induces 30% extra demand). Transit share rises with transit, cycling and pricing. Emissions = grid demand x (1 - renewable share) x carbon policy factor + traffic term, indexed to baseline = 100. Water security = effective supply (after leakage) / demand. Affordability = housing supply / population x affordable-share factor. Economic activity is an index, not GDP. Indices are not minutes of delay or real units. No hydrology, land-use, or behavioural calibration exists; coefficients are illustrative.</p><div class=row><button class=b id=js>Show JSON</button><button class=b id=csv>Show CSV</button><button class=b onclick="print()">Print</button></div>${s.exp?`<textarea readonly rows=10 style="width:100%" id=ex>${s.exp}</textarea>`:''}`;
+$('v').innerHTML=h;bind()}
+function warn(r){const w=[];if(r.cong>70)w.push('Congestion index above 70');if(r.water<60)w.push('Water security below 60');if(r.stress>60)w.push('Infrastructure stress above 60');if(r.afford<50)w.push('Housing affordability below 50');if(r.green<15)w.push('Effective green coverage below 15');return w}
+function wscore(r){const w=s.w,t=w.econ+w.mob+w.sus+w.aff+w.res;return(w.econ*clamp(r.econ)+w.mob*(100-r.cong)+w.sus*clamp(100-r.emis/2+ r.renew/2)/1+w.aff*r.afford+w.res*r.resil)/t}
+function csv(list){const R=list.map(a=>sim(a.p,s.year));return['metric,'+list.map(a=>'"'+a.name+'"').join(','),...M.map(x=>x[1]+' ('+x[2]+'),'+R.map(r=>r[x[0]]).join(','))].join('\n')}
+const $=id=>document.getElementById(id);
+function ask(q){const l=q.toLowerCase(),m=sim(s.com,s.year),b=sim(BASE,s.year);let a;s.rec=null;
+if(/emission/.test(l)&&/(lowest|least|most|best|reduce)/.test(l)){const all=[{name:'Baseline',p:BASE},...s.saved].map(x=>[x.name,sim(x.p,s.year).emis]).sort((x,y)=>x[1]-y[1]);a=`Calculated at ${s.year}: ${all[0][0]} has the lowest emissions index (${all[0][1]}, baseline = ${b.emis}). Ranking: ${all.map(x=>x[0]+' '+x[1]).join('; ')}. Emissions fall with higher renewable share and carbon policy, and rise with demand and car traffic.`}
+else if(/congest/.test(l)){a=`Congestion index is ${m.cong} (baseline ${b.cong}). Drivers in the model: transit share ${m.transit}%, road effort ${s.com.road} (adds induced demand), congestion pricing ${s.com.pricing}, population ${m.pop}M. ${m.cong>60?'It is above the 60 warning level; more transit and pricing usually help more than roads because of induced demand.':'It is below the warning level.'}`}
+else if(/(double|2x)/.test(l)&&/transit/.test(l)){const p={...s.com,transit:Math.min(100,s.com.transit*2)},n=sim(p,s.year);a=`Doubling transit investment (${s.com.transit} to ${p.transit}): congestion ${m.cong} to ${n.cong}, transit share ${m.transit}% to ${n.transit}%, cost ${m.cost} to ${n.cost}, resilience ${m.resil} to ${n.resil}. Modeled result only; real response would depend on service quality not captured here.`}
+else if(/compare/.test(l)){const t=s.saved.find(x=>/resilience/i.test(x.name));if(!t)a='The Climate Resilience scenario is not saved.';else{const n=sim(t.p,s.year);a='Current vs '+t.name+': '+['cong','emis','renew','water','resil','cost'].map(k=>k+' '+m[k]+' vs '+n[k]).join('; ')+'.'}}
+else if(/recommend|suggest|improve|policy/.test(l)){const ch=m.cong>55?{transit:Math.min(100,s.com.transit+25),pricing:Math.min(100,s.com.pricing+25)}:m.emis>70?{renew:Math.min(100,s.com.renew+25),carbon:Math.min(100,s.com.carbon+20)}:m.water<80?{water:Math.min(100,s.com.water+20),cons:Math.min(100,s.com.cons+20)}:{green:Math.min(100,s.com.green+15)};const n=sim({...s.com,...ch},s.year);s.rec=ch;a=`Proposal: ${Object.entries(ch).map(e=>e[0]+' to '+e[1]).join(', ')}. Why: ${m.cong>55?'congestion is the weakest modeled area':'the next weakest area'}. Modeled effect: congestion ${m.cong} to ${n.cong}, emissions ${m.emis} to ${n.emis}, cost ${m.cost} to ${n.cost}, resilience ${m.resil} to ${n.resil}. Trade-off: higher cost; monitor affordability and economic activity (${n.afford}, ${n.econ}). This is a suggestion from the model, not a validated forecast.`}
+else a='I can only answer from the simulation. Try: lowest emissions, why congestion, double transit, recommend, compare.';
+s.chat.push(['u',q],['a',a])}
+function bind(){const on=(id,f)=>{const e=$(id);if(e)e.onclick=f};
+if($('yr'))$('yr').onchange=e=>{s.year=+e.target.value;rv()};
+if($('ly'))$('ly').onchange=e=>{s.layer=e.target.value;rv()};
+document.querySelectorAll('.dist').forEach(e=>{e.onclick=()=>{s.dist=+e.dataset.d;rv()};e.onkeydown=k=>{if(k.key=='Enter'){s.dist=+e.dataset.d;rv()}}});
+document.querySelectorAll('[data-k]').forEach(e=>e.oninput=()=>{s.hist.push({...s.p});s.hist=s.hist.slice(-30);s.p[e.dataset.k]=+e.value;e.nextElementSibling.textContent=e.value});
+document.querySelectorAll('[data-k]').forEach(e=>e.onchange=rv);
+if($('nm'))$('nm').onchange=e=>{s.name=e.target.value};
+on('run',()=>{const o=sim(s.com,s.year);s.com={...s.p};const n=sim(s.com,s.year);s.feed=M.filter(x=>x[3]!='n'&&Math.abs(n[x[0]]-o[x[0]])>=1).map(x=>`${x[1]} moved ${o[x[0]]} to ${n[x[0]]}.`).concat(s.feed).slice(0,12);rv()});
+on('sv',()=>{s.saved.push(mk(s.name,s.p));persist();s.feed.unshift('Saved scenario '+s.name+'.');rv()});
+on('un',()=>{if(s.hist.length){s.p=s.hist.pop();rv()}});
+on('rst',()=>{s.p={...BASE};s.com={...BASE};s.hist=[];s.feed.unshift('Reset to baseline.');rv()});
+document.querySelectorAll('[data-w]').forEach(e=>e.onchange=()=>{s.w[e.dataset.w]=+e.value;rv()});
+document.querySelectorAll('[data-del]').forEach(e=>e.onclick=()=>{if(confirm('Delete this scenario?')){s.saved.splice(+e.dataset.del,1);persist();rv()}});
+document.querySelectorAll('[data-dup]').forEach(e=>e.onclick=()=>{const a=s.saved[+e.dataset.dup];s.saved.push(mk(a.name+' copy',a.p));persist();rv()});
+document.querySelectorAll('[data-load]').forEach(e=>e.onclick=()=>{s.p={...s.saved[+e.dataset.load].p};s.view='lab';rv()});
+on('csv',()=>{s.exp=csv(s.view=='cmp'?[{name:'Baseline',p:BASE},...s.saved]:[{name:s.name,p:s.com}]);rv()});
+on('js',()=>{s.exp=JSON.stringify({model:MODEL,name:s.name,year:s.year,parameters:s.com,metrics:sim(s.com,s.year)},null,2);rv()});
+document.querySelectorAll('[data-q]').forEach(e=>e.onclick=()=>{ask(e.dataset.q);rv()});
+const go=()=>{const v=$('q').value.trim();if(v){ask(v);rv()}};on('ask',go);if($('q'))$('q').onkeydown=e=>{if(e.key=='Enter')go()};
+on('ap',()=>{s.p={...s.p,...s.rec};s.rec=null;s.view='lab';rv()})}
+V.forEach(v=>{const b=document.createElement('button');b.textContent=VN[v];b.dataset.v=v;b.onclick=()=>{s.view=v;s.exp='';rv()};$('nav').appendChild(b)});
+rv();
+</script></body></html>
