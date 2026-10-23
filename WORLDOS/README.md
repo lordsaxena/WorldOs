@@ -23,6 +23,7 @@ npm run preview
 
 ## Included features
 
+- Glassmorphism WorldOS desktop welcome screen with live system status, application launcher, assistant panel, and workspace sign-in overlay
 - City overview with synthetic metrics and system health
 - Interactive 2D district map with layer coloring, selection, zoom, and inspector
 - Mobility, energy/climate, water/resources, and economy/housing workspaces
