@@ -13,9 +13,12 @@ class Settings(BaseSettings):
     api_title: str = Field(default="WorldOS API")
     api_version: str = Field(default="1.0.0")
     environment: str = Field(default="development")
+    database_url: str = Field(default="")
     cors_origins: str = Field(
         default="http://localhost:5173,http://127.0.0.1:5173"
     )
+    session_cookie_name: str = Field(default="worldos_session")
+    session_lifetime_hours: int = Field(default=168, ge=1, le=720)
 
     @field_validator("cors_origins")
     @classmethod
@@ -28,6 +31,10 @@ class Settings(BaseSettings):
     @property
     def allowed_origins(self) -> list[str]:
         return self.cors_origins.split(",")
+
+    @property
+    def secure_cookies(self) -> bool:
+        return self.environment.lower() not in {"development", "local", "test"}
 
 
 settings = Settings()

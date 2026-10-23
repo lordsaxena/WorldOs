@@ -25,7 +25,10 @@ function isSystemStatus(value) {
     typeof value.components === "object" &&
     value.components.python_api !== null &&
     typeof value.components.python_api === "object" &&
-    ["healthy", "starting"].includes(value.components.python_api.status)
+    ["healthy", "starting"].includes(value.components.python_api.status) &&
+    value.components.postgresql !== null &&
+    typeof value.components.postgresql === "object" &&
+    ["healthy", "starting"].includes(value.components.postgresql.status)
   );
 }
 
@@ -47,6 +50,7 @@ export async function getSystemStatus(signal) {
   try {
     const response = await fetch(`${apiBaseUrl}/api/v1/system/status`, {
       headers: {Accept: "application/json"},
+      credentials: "include",
       signal: controller.signal,
     });
     if (!response.ok) {
@@ -73,4 +77,60 @@ export async function getSystemStatus(signal) {
     clearTimeout(timeoutId);
     signal?.removeEventListener("abort", abortFromCaller);
   }
+}
+
+async function requestJson(path, {method = "GET", body, signal} = {}) {
+  let response;
+  try {
+    response = await fetch(`${apiBaseUrl}${path}`, {
+      method,
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        ...(body === undefined ? {} : {"Content-Type": "application/json"}),
+      },
+      ...(body === undefined ? {} : {body: JSON.stringify(body)}),
+      signal,
+    });
+  } catch (error) {
+    if (error.name === "AbortError") throw error;
+    throw new ApiError("Could not reach the WorldOS API.");
+  }
+
+  if (response.status === 204) return null;
+
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new ApiError("WorldOS API returned invalid JSON.", response.status);
+  }
+  if (!response.ok) {
+    const message =
+      typeof payload?.detail?.message === "string"
+        ? payload.detail.message
+        : `WorldOS API returned HTTP ${response.status}.`;
+    throw new ApiError(message, response.status);
+  }
+  return payload;
+}
+
+export function registerAccount(account) {
+  return requestJson("/api/v1/auth/register", {method: "POST", body: account});
+}
+
+export function loginAccount(credentials) {
+  return requestJson("/api/v1/auth/login", {method: "POST", body: credentials});
+}
+
+export function logoutAccount() {
+  return requestJson("/api/v1/auth/logout", {method: "POST"});
+}
+
+export function getCurrentUser(signal) {
+  return requestJson("/api/v1/auth/me", {signal});
+}
+
+export function updateUserProfile(profile) {
+  return requestJson("/api/v1/auth/me", {method: "PUT", body: profile});
 }

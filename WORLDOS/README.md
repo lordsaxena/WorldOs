@@ -65,17 +65,22 @@ If PowerShell blocks `npm`, use `npm.cmd install` and `npm.cmd run dev`.
 
 ## Python API status indicator
 
-The frontend shows the Python API's live runtime status in a small badge. Start
-the API separately from `backend\services\ai-python` using the commands in
-[`backend/README.md`](./backend/README.md). The status badge reads
-`GET /api/v1/system/status`; the city's simulation, scenarios, and assistant
-remain local browser functionality. Set `VITE_API_BASE_URL` in a root `.env`
-file to point the badge at another API URL; the default is
+The frontend includes email/password registration and sign-in. Signed-in users
+can save private, manually entered city/town, state/region, country, and
+description details from the account control. These profile details are not
+shared in a global location directory and do not change the illustrative city
+simulation. The Python API's health is shown in a status badge.
+
+Start PostgreSQL and the Python API using the Windows instructions in
+[`backend/README.md`](./backend/README.md). The API applies its account schema
+on startup and requires PostgreSQL; the city simulation, scenarios, and
+assistant remain local browser functionality. Set `VITE_API_BASE_URL` in the
+frontend `.env` file to point at another API URL; the default is
 `http://localhost:8000`.
 
 ## Tests
 
-Run `npm test` for the deterministic simulation and API-client tests. Run
-`npm run build` after installing dependencies to create the production build in
-`dist/`. Run the Python API tests from `backend\services\ai-python` with
+Run `npm test` for simulation and API-client tests. Run `npm run build` after
+installing dependencies to create the production build in `dist/`. Run the
+Python API and authentication tests from `backend\services\ai-python` with
 `.\.venv\Scripts\python.exe -m unittest discover -s tests -v`.

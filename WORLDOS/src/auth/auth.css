@@ -1,0 +1,275 @@
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(ellipse at 18% 12%, #12314470, transparent 42%),
+    #080d15;
+  color: #e6edf5;
+}
+
+.auth-card {
+  width: min(100%, 460px);
+  padding: 30px;
+  border: 1px solid #1d2c3b;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #0d1723, #0b141f);
+  box-shadow: 0 20px 70px #0008;
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 32px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.auth-brand span,
+.account-avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #1d5367;
+  border-radius: 9px;
+  background: #0e2c3b;
+  color: #5ce1f4;
+}
+
+.auth-eyebrow {
+  color: #6f899d;
+  font: 9px 'DM Mono', monospace;
+  letter-spacing: 1.4px;
+}
+
+.auth-card h1 {
+  margin: 8px 0;
+  font-size: 25px;
+  letter-spacing: -.6px;
+}
+
+.auth-intro {
+  margin: 0 0 20px;
+  color: #8ca0b2;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  padding: 4px;
+  margin-bottom: 18px;
+  border: 1px solid #1d2c3b;
+  border-radius: 8px;
+  background: #080f18;
+}
+
+.auth-tabs button {
+  padding: 9px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #8398aa;
+  font-size: 11px;
+}
+
+.auth-tabs button.active {
+  background: #142635;
+  color: #d9f7fc;
+}
+
+.auth-form,
+.account-panel {
+  display: grid;
+  gap: 13px;
+}
+
+.auth-form label,
+.account-field {
+  display: grid;
+  gap: 6px;
+  color: #a9bbc9;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.auth-form input,
+.account-field input,
+.account-field textarea {
+  width: 100%;
+  border: 1px solid #263949;
+  border-radius: 7px;
+  outline: none;
+  background: #080f18;
+  color: #e6edf5;
+  padding: 10px 11px;
+  font: inherit;
+  font-size: 12px;
+}
+
+.auth-form input:focus,
+.account-field input:focus,
+.account-field textarea:focus {
+  border-color: #42c9e8;
+}
+
+.auth-form small {
+  color: #71879a;
+  font-size: 9px;
+  font-weight: 400;
+}
+
+.auth-location-heading {
+  margin-top: 4px;
+  color: #6f899d;
+  font: 9px 'DM Mono', monospace;
+  letter-spacing: 1.1px;
+}
+
+.auth-location-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.auth-location-country {
+  grid-column: 1 / -1;
+}
+
+.auth-privacy-note {
+  margin: 0;
+  color: #71879a;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.auth-error {
+  padding: 9px 10px;
+  border: 1px solid #67323a;
+  border-radius: 6px;
+  background: #29151b;
+  color: #ffb5bc;
+  font-size: 10px;
+}
+
+.account-success {
+  color: #67dfbd;
+  font-size: 10px;
+}
+
+.auth-submit {
+  width: 100%;
+  margin-top: 3px;
+  padding: 11px;
+  border: 1px solid #6be6f5;
+  border-radius: 7px;
+  background: #49d0e8;
+  color: #06202b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.auth-submit:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.auth-loading {
+  color: #9bb0c2;
+  font-size: 12px;
+}
+
+.account-controls {
+  position: fixed;
+  right: 12px;
+  bottom: 58px;
+  z-index: 999;
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  font-family: Manrope, Inter, system-ui, sans-serif;
+}
+
+.account-launch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(330px, calc(100vw - 24px));
+  padding: 5px 10px 5px 5px;
+  border: 1px solid #263949;
+  border-radius: 8px;
+  background: #0b1420;
+  color: #b4c5d4;
+  box-shadow: 0 4px 16px #0008;
+  font-size: 9px;
+}
+
+.account-avatar {
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+  border-radius: 6px;
+  font: 10px 'DM Mono', monospace;
+}
+
+.account-launch > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-panel {
+  width: min(360px, calc(100vw - 24px));
+  max-height: min(76vh, 650px);
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid #263949;
+  border-radius: 10px;
+  background: #0b1420;
+  box-shadow: 0 10px 40px #000b;
+}
+
+.account-panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.account-panel-heading h2 {
+  margin: 5px 0 0;
+  color: #e6edf5;
+  font-size: 14px;
+}
+
+.account-close {
+  border: 0;
+  background: none;
+  color: #9bb0c2;
+  font-size: 23px;
+}
+
+.account-email {
+  color: #6f899d;
+  font-size: 10px;
+}
+
+.account-signout {
+  padding: 8px;
+  border: 1px solid #5b2933;
+  border-radius: 6px;
+  background: #29151b;
+  color: #ffb5bc;
+  font-size: 10px;
+}
+
+@media (max-width: 520px) {
+  .auth-card {
+    padding: 22px;
+  }
+}

@@ -61,6 +61,83 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SystemStatusResponse"
+  /api/v1/auth/register:
+    post:
+      summary: Create an account and sign in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegistrationRequest"
+      responses:
+        "201":
+          description: Account profile and HttpOnly session cookie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "409":
+          description: Account email is already registered
+        "422":
+          description: Invalid registration details
+  /api/v1/auth/login:
+    post:
+      summary: Sign in and create a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Account profile and HttpOnly session cookie
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Invalid email or password
+  /api/v1/auth/logout:
+    post:
+      summary: Revoke the current session
+      responses:
+        "204":
+          description: Session revoked and cookie cleared
+  /api/v1/auth/me:
+    get:
+      summary: Get the current account profile
+      responses:
+        "200":
+          description: Authenticated account profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Authentication required
+    put:
+      summary: Update private profile and location details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdateRequest"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Authentication required
 components:
   schemas:
     HealthResponse:
@@ -88,6 +165,77 @@ components:
         status:
           type: string
           enum: [healthy, starting]
+    RegistrationRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          minLength: 12
+          maxLength: 128
+        city_name:
+          type: [string, "null"]
+          maxLength: 120
+        state_region:
+          type: [string, "null"]
+          maxLength: 120
+        country:
+          type: [string, "null"]
+          maxLength: 120
+        location_description:
+          type: [string, "null"]
+          maxLength: 500
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          maxLength: 128
+    ProfileUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        city_name:
+          type: [string, "null"]
+          maxLength: 120
+        state_region:
+          type: [string, "null"]
+          maxLength: 120
+        country:
+          type: [string, "null"]
+          maxLength: 120
+        location_description:
+          type: [string, "null"]
+          maxLength: 500
+    UserProfile:
+      type: object
+      required: [id, email, city_name, state_region, country, location_description, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        city_name:
+          type: [string, "null"]
+        state_region:
+          type: [string, "null"]
+        country:
+          type: [string, "null"]
+        location_description:
+          type: [string, "null"]
+        created_at:
+          type: string
+          format: date-time
     RuntimeInfo:
       type: object
       required: [python_version, environment]
@@ -117,7 +265,9 @@ components:
           $ref: "#/components/schemas/RuntimeInfo"
         components:
           type: object
-          required: [python_api]
+          required: [python_api, postgresql]
           properties:
             python_api:
+              $ref: "#/components/schemas/ComponentStatus"
+            postgresql:
               $ref: "#/components/schemas/ComponentStatus"

@@ -12,7 +12,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from app.api.auth import router as auth_router
 from app.config import settings
+from app.database import Database, initialize_database
 
 
 logger = logging.getLogger("worldos.api")
@@ -60,6 +62,10 @@ def log_event(level: int, event: str, **fields: object) -> None:
 
 @asynccontextmanager
 async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
+    application.state.ready = False
+    application.state.database_status = "starting"
+    await initialize_database()
+    application.state.database_status = "healthy"
     application.state.ready = True
     application.state.started_at = datetime.now(timezone.utc)
     application.state.started_monotonic = time.monotonic()
@@ -87,9 +93,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "HEAD", "OPTIONS"],
+    allow_methods=["GET", "HEAD", "POST", "PUT", "OPTIONS"],
     allow_headers=["Accept", "Content-Type"],
 )
+app.include_router(auth_router)
 
 
 @app.middleware("http")
@@ -149,15 +156,21 @@ async def health() -> HealthResponse:
     response_model=ReadinessResponse,
     responses={503: {"model": ReadinessResponse}},
 )
-async def readiness(request: Request) -> ReadinessResponse | JSONResponse:
+async def readiness(
+    request: Request, connection: Database
+) -> ReadinessResponse | JSONResponse:
     if not getattr(request.app.state, "ready", False):
         response = ReadinessResponse(status="not_ready", service=settings.service_name)
         return JSONResponse(status_code=503, content=response.model_dump())
+    await connection.execute("SELECT 1")
     return ReadinessResponse(status="ready", service=settings.service_name)
 
 
 @app.get("/api/v1/system/status", response_model=SystemStatusResponse)
-async def system_status(request: Request) -> SystemStatusResponse:
+async def system_status(
+    request: Request, connection: Database
+) -> SystemStatusResponse:
+    await connection.execute("SELECT 1")
     is_ready = getattr(request.app.state, "ready", False)
     started_at = getattr(request.app.state, "started_at", None)
     started_monotonic = getattr(request.app.state, "started_monotonic", None)
@@ -169,6 +182,9 @@ async def system_status(request: Request) -> SystemStatusResponse:
     component_status: Literal["healthy", "starting"] = (
         "healthy" if is_ready else "starting"
     )
+    database_status: Literal["healthy", "starting"] = getattr(
+        request.app.state, "database_status", "starting"
+    )
     return SystemStatusResponse(
         service=settings.service_name,
         version=settings.api_version,
@@ -179,5 +195,8 @@ async def system_status(request: Request) -> SystemStatusResponse:
             python_version=sys.version.split()[0],
             environment=settings.environment,
         ),
-        components={"python_api": ComponentStatus(status=component_status)},
+        components={
+            "python_api": ComponentStatus(status=component_status),
+            "postgresql": ComponentStatus(status=database_status),
+        },
     )

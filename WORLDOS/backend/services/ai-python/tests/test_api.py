@@ -1,10 +1,13 @@
 import json
 import unittest
+from unittest.mock import AsyncMock, patch
 from typing import Any, AsyncContextManager
 
 from pydantic import ValidationError
+from fastapi import HTTPException
 
 from app.config import Settings, settings
+from app.database import get_database
 from app.main import app, handle_unexpected_error
 from starlette.requests import Request
 from starlette.types import Message, Scope
@@ -56,11 +59,23 @@ async def request(
 
 class ApiTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
+        self.initialize_database = patch(
+            "app.main.initialize_database", new_callable=AsyncMock
+        )
+        self.initialize_database.start()
+        database = AsyncMock()
+
+        async def override_database():
+            yield database
+
+        app.dependency_overrides[get_database] = override_database
         self.lifespan: AsyncContextManager[Any] = app.router.lifespan_context(app)
         await self.lifespan.__aenter__()
 
     async def asyncTearDown(self) -> None:
         await self.lifespan.__aexit__(None, None, None)
+        app.dependency_overrides.clear()
+        self.initialize_database.stop()
 
     async def test_root_and_health_preserve_existing_contract(self) -> None:
         root_status, _, root_body = await request("/")
@@ -88,6 +103,21 @@ class ApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(json.loads(body)["status"], "starting")
         app.state.ready = True
 
+    async def test_readiness_reports_database_connection_failures(self) -> None:
+        async def unavailable_database():
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "code": "database_unavailable",
+                    "message": "Database unavailable.",
+                },
+            )
+
+        app.dependency_overrides[get_database] = unavailable_database
+        status, _, body = await request("/ready")
+        self.assertEqual(status, 503)
+        self.assertEqual(json.loads(body)["detail"]["code"], "database_unavailable")
+
     async def test_system_status_reports_only_real_runtime_components(self) -> None:
         status, _, body = await request("/api/v1/system/status")
         payload = json.loads(body)
@@ -95,7 +125,13 @@ class ApiTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(payload["service"], "ai-python")
         self.assertEqual(payload["status"], "healthy")
         self.assertGreaterEqual(payload["uptime_seconds"], 0)
-        self.assertEqual(payload["components"], {"python_api": {"status": "healthy"}})
+        self.assertEqual(
+            payload["components"],
+            {
+                "python_api": {"status": "healthy"},
+                "postgresql": {"status": "healthy"},
+            },
+        )
         self.assertTrue(payload["runtime"]["python_version"])
         self.assertEqual(payload["runtime"]["environment"], settings.environment)
 
