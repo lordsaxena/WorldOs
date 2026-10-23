@@ -1,22 +1,33 @@
-# WorldOS
+# WORLDOS
 
 Urban simulation prototype with an interactive 3D-style city map.
 
+**Live app:** [lordsaxena.github.io/WorldOs](https://lordsaxena.github.io/WorldOs/)
+
 ## Run locally
+
+Requires Node.js 18 or newer.
 
 ```bash
 cd WORLDOS
-npm install
+npm ci
 npm run dev
 ```
 
-## GitHub Pages
+Open the local URL printed by Vite, usually `http://localhost:5173/`.
+Do not open `WORLDOS/index.html` directly; it is the Vite app entry point.
 
-The GitHub Actions workflow builds the app in `WORLDOS/` and publishes the
-production site to [https://lordsaxena.github.io/WorldOs/](https://lordsaxena.github.io/WorldOs/).
-It runs automatically when changes are pushed to `main`; it can also be
-started manually from the Actions tab.
+## Test and build
 
-The source `WORLDOS/index.html` is a Vite entry point and is not intended to
-be opened directly as a file. Use the local development server or the
-published Pages site.
+Run these commands from `WORLDOS/`:
+
+```bash
+npm test
+npm run build
+```
+
+## Deployment
+
+GitHub Actions builds `WORLDOS/` and deploys it to GitHub Pages whenever
+changes to the app or deployment workflow are pushed to `main`. Deployment
+can also be started manually from the repository's Actions tab.
