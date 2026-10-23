@@ -1,0 +1,123 @@
+openapi: 3.1.0
+info:
+  title: WorldOS API
+  version: 1.0.0
+  description: Health and runtime status for the WorldOS Python API.
+servers:
+  - url: http://localhost:8000
+paths:
+  /:
+    get:
+      summary: Get service information
+      responses:
+        "200":
+          description: Service information and API docs location
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [name, status, docs]
+                properties:
+                  name:
+                    type: string
+                  status:
+                    type: string
+                    const: online
+                  docs:
+                    type: string
+  /health:
+    get:
+      summary: Check process liveness
+      responses:
+        "200":
+          description: Python API process is responding
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /ready:
+    get:
+      summary: Check startup readiness
+      responses:
+        "200":
+          description: Service startup has completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResponse"
+        "503":
+          description: Service startup has not completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResponse"
+  /api/v1/system/status:
+    get:
+      summary: Get authoritative Python API runtime status
+      responses:
+        "200":
+          description: Current API process status and runtime
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemStatusResponse"
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service]
+      properties:
+        status:
+          type: string
+          const: healthy
+        service:
+          type: string
+    ReadinessResponse:
+      type: object
+      required: [status, service]
+      properties:
+        status:
+          type: string
+          enum: [ready, not_ready]
+        service:
+          type: string
+    ComponentStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [healthy, starting]
+    RuntimeInfo:
+      type: object
+      required: [python_version, environment]
+      properties:
+        python_version:
+          type: string
+        environment:
+          type: string
+    SystemStatusResponse:
+      type: object
+      required: [service, version, status, started_at, uptime_seconds, runtime, components]
+      properties:
+        service:
+          type: string
+        version:
+          type: string
+        status:
+          type: string
+          enum: [healthy, starting]
+        started_at:
+          type: [string, "null"]
+          format: date-time
+        uptime_seconds:
+          type: number
+          minimum: 0
+        runtime:
+          $ref: "#/components/schemas/RuntimeInfo"
+        components:
+          type: object
+          required: [python_api]
+          properties:
+            python_api:
+              $ref: "#/components/schemas/ComponentStatus"

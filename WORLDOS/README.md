@@ -63,6 +63,19 @@ Open **3D City Map** from the left navigation to explore a procedural city scene
 
 If PowerShell blocks `npm`, use `npm.cmd install` and `npm.cmd run dev`.
 
+## Python API status indicator
+
+The frontend shows the Python API's live runtime status in a small badge. Start
+the API separately from `backend\services\ai-python` using the commands in
+[`backend/README.md`](./backend/README.md). The status badge reads
+`GET /api/v1/system/status`; the city's simulation, scenarios, and assistant
+remain local browser functionality. Set `VITE_API_BASE_URL` in a root `.env`
+file to point the badge at another API URL; the default is
+`http://localhost:8000`.
+
 ## Tests
 
-Run `npm test` to run the included deterministic simulation engine tests. Run `npm run build` after installing dependencies to create the production build in `dist/`.
+Run `npm test` for the deterministic simulation and API-client tests. Run
+`npm run build` after installing dependencies to create the production build in
+`dist/`. Run the Python API tests from `backend\services\ai-python` with
+`.\.venv\Scripts\python.exe -m unittest discover -s tests -v`.
